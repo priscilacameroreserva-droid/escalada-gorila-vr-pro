@@ -18,7 +18,7 @@ body.vr #hud{padding:6px}body.vr #camBox{width:88px;height:116px;left:7px;bottom
  <div id="buttons"><button id="gyro">ATIVAR GIROSCÓPIO</button><button id="vr" class="primary">ENTRAR EM VR</button><button id="exitVR">SAIR DO VR</button><button id="full">TELA CHEIA</button></div></div>
  <div id="bottom"><div class="panel" id="help">Mostre as mãos à câmera. Feche os dedos para agarrar uma pedra e puxe as mãos para baixo para subir. Mova o celular para olhar ao redor.</div><div class="panel" id="height">ALTURA 0 m</div></div>
 </div>
-<div id="camBox"><video id="cam" autoplay playsinline muted></video><div id="camLabel">CÂMERA / MÃOS</div></div>
+<div id="camBox"><video id="cam" autoplay playsinline muted></video><div id="camLabel">CÂMERA TRASEIRA</div></div>
 <div id="start"><div id="card"><h1>🦍 Escalada Gorila VR PRO</h1><p>Ative a câmera para o rastreamento das mãos e o giroscópio para olhar ao redor. Depois toque em <b>Entrar em VR</b>.</p><p>Em celulares compatíveis, o navegador abre a solicitação de entrada em realidade virtual. Se o aparelho não oferecer WebXR, o jogo usa visualização Cardboard dividida em duas lentes retangulares.</p><button id="go" class="primary">ATIVAR CÂMERA E COMEÇAR</button></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script type="module">
@@ -42,8 +42,8 @@ const fingerPaths=[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]]
 function d2(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function fist(l){let n=0;for(const t of [8,12,16,20])if(d2(l[t],l[9])<d2(l[t-2],l[9])*.88)n++;return n>=3}
 function applyHand(i,l){const h=handModels[i];if(!l){h.root.visible=false;smoothed[i]=null;prevWrist[i]=null;fistState[i]=false;return}h.root.visible=true;
-if(!smoothed[i])smoothed[i]=l.map(p=>({x:p.x,y:p.y,z:p.z||0}));else l.forEach((p,j)=>{smoothed[i][j].x+=(p.x-smoothed[i][j].x )*.58;smoothed[i][j].y+=(p.y-smoothed[i][j].y)*.42;smoothed[i][j].z+=((p.z||0)-smoothed[i][j].z)*.42});
-const pts=smoothed[i].map(p=>new THREE.Vector3((.5-p.x)*2.9,(.5-p.y)*2.35,-2.25-(p.z||0)*.4));
+if(!smoothed[i])smoothed[i]=l.map(p=>({x:p.x,y:p.y,z:p.z||0}));else l.forEach((p,j)=>{smoothed[i][j].x+=(p.x-smoothed[i][j].x )*.58;smoothed[i][j].y+=(p.y-smoothed[i][j].y)*.58;smoothed[i][j].z+=((p.z||0)-smoothed[i][j].z)*.58});
+const pts=smoothed[i].map(p=>new THREE.Vector3((p.x-.5)*2.9,(.5-p.y)*2.35,-2.25-(p.z||0)*.4));
 const center=pts[0].clone().lerp(pts[9],.48);h.root.position.set(center.x,center.y,center.z);h.root.rotation.z=(l[5].y-l[17].y)*.55;
 const closed=fist(smoothed[i]);fistState[i]=closed;fingerPaths.forEach((path,f)=>{const data=h.fingers[f],p=path.map(k=>pts[k].clone().sub(center));for(let j=0;j<3;j++){const a=p[j],b=p[j+1],v=b.clone().sub(a),mesh=data.segs[j];mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.clone().normalize());mesh.scale.set(1,Math.max(.5,v.length()/.12),1)}data.joint.position.copy(p[2]);data.nail.position.copy(p[3]).add(new THREE.Vector3(0,.025,.025))});
 const wrist=smoothed[i][0];if(closed&&prevWrist[i]){const dy=wrist.y-prevWrist[i].y;if(dy>.001)climbVelocity=Math.min(climbVelocity+dy*14,.24)}prevWrist[i]={x:wrist.x,y:wrist.y};
